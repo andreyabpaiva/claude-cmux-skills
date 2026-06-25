@@ -1,0 +1,6 @@
+{
+  "name": "cmux",
+  "version": "1.0.0",
+  "category": "core",
+  "description": "Core cmux CLI — topology, handles, env vars, and orientation"
+}

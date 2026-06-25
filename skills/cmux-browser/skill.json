@@ -1,0 +1,6 @@
+{
+  "name": "cmux-browser",
+  "version": "1.0.0",
+  "category": "automation",
+  "description": "Browser panel automation with dev server detection"
+}

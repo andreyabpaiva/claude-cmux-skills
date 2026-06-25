@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+BIN_DIR="$(dirname "$SCRIPT_PATH")"
+REPO_DIR="$(dirname "$BIN_DIR")"
+SKILLS_DIR="$REPO_DIR/skills"
+
+GLOBAL_DIR="$HOME/.claude/skills"
+PROJECT_DIR=".claude/skills"
+
+usage() {
+  cat <<EOF
+cmux-claude — Claude Code skill manager for cmux
+
+Commands:
+  setup                          Re-run install (symlink to /usr/local/bin)
+  install [<skill>]              Install all skills globally (default)
+  install --project [<skill>]   Install to current project's .claude/skills
+  install --category <cat>      Install skills by category
+  update                         Pull latest repo and refresh symlinks
+  list                           List available skills
+  status                         Show where skills are installed
+  uninstall [<skill>]           Uninstall from global
+  uninstall --project [<skill>] Uninstall from current project
+
+Categories: core, automation, config, utils
+EOF
+}
+
+get_meta() {
+  local json="$1/skill.json"
+  local field="$2"
+  [[ -f "$json" ]] && python3 -c "import json,sys; d=json.load(open('$json')); print(d.get('$field',''))" 2>/dev/null || echo ""
+}
+
+do_install() {
+  local name="$1" target="$2"
+  local src="$SKILLS_DIR/$name"
+  [[ -d "$src" ]] || { echo "  ✗ skill '$name' not found"; return 1; }
+  mkdir -p "$target"
+  local link="$target/$name"
+  [[ -L "$link" ]] && rm "$link"
+  [[ -e "$link" ]] && { echo "  ✗ $link exists and is not a symlink — skipping"; return 1; }
+  ln -s "$src" "$link"
+  echo "  ✓ $name"
+}
+
+do_uninstall() {
+  local name="$1" target="$2"
+  local link="$target/$name"
+  if [[ -L "$link" ]]; then
+    rm "$link"
+    echo "  ✓ removed $name"
+  else
+    echo "  - $name not installed in $target"
+  fi
+}
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  setup)
+    ln -sf "$SCRIPT_PATH" /usr/local/bin/cmux-claude
+    echo "cmux-claude → /usr/local/bin/cmux-claude"
+    ;;
+
+  list)
+    printf "%-32s %-8s %-12s %s\n" "SKILL" "VERSION" "CATEGORY" "DESCRIPTION"
+    printf "%-32s %-8s %-12s %s\n" "-----" "-------" "--------" "-----------"
+    for dir in "$SKILLS_DIR"/*/; do
+      local_name="$(basename "$dir")"
+      printf "%-32s %-8s %-12s %s\n" \
+        "$local_name" \
+        "$(get_meta "$dir" version)" \
+        "$(get_meta "$dir" category)" \
+        "$(get_meta "$dir" description)"
+    done
+    ;;
+
+  install)
+    target="$GLOBAL_DIR"
+    category=""
+    skill_name=""
+
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --project) target="$PROJECT_DIR" ;;
+        --global)  target="$GLOBAL_DIR" ;;
+        --category) shift; category="$1" ;;
+        *) skill_name="$1" ;;
+      esac
+      shift
+    done
+
+    echo "Installing to $target..."
+
+    if [[ -n "$skill_name" ]]; then
+      do_install "$skill_name" "$target"
+    else
+      for dir in "$SKILLS_DIR"/*/; do
+        n="$(basename "$dir")"
+        if [[ -n "$category" ]]; then
+          c="$(get_meta "$dir" category)"
+          [[ "$c" == "$category" ]] || continue
+        fi
+        do_install "$n" "$target"
+      done
+    fi
+    ;;
+
+  uninstall)
+    target="$GLOBAL_DIR"
+    skill_name=""
+
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --project) target="$PROJECT_DIR" ;;
+        --global)  target="$GLOBAL_DIR" ;;
+        *) skill_name="$1" ;;
+      esac
+      shift
+    done
+
+    if [[ -n "$skill_name" ]]; then
+      do_uninstall "$skill_name" "$target"
+    else
+      for dir in "$SKILLS_DIR"/*/; do
+        do_uninstall "$(basename "$dir")" "$target"
+      done
+    fi
+    ;;
+
+  update)
+    echo "Pulling latest..."
+    git -C "$REPO_DIR" pull
+    echo "Done — symlinks updated automatically."
+    ;;
+
+  status)
+    printf "%-32s %-8s %-16s %s\n" "SKILL" "VERSION" "GLOBAL" "PROJECT"
+    printf "%-32s %-8s %-16s %s\n" "-----" "-------" "------" "-------"
+    for dir in "$SKILLS_DIR"/*/; do
+      n="$(basename "$dir")"
+      v="$(get_meta "$dir" version)"
+      g="not installed"; [[ -L "$GLOBAL_DIR/$n" ]] && g="✓ installed"
+      p="not installed"; [[ -L "$PROJECT_DIR/$n" ]] && p="✓ installed"
+      printf "%-32s %-8s %-16s %s\n" "$n" "$v" "$g" "$p"
+    done
+    ;;
+
+  help|--help|-h)
+    usage
+    ;;
+
+  *)
+    echo "Unknown command: $cmd"
+    usage
+    exit 1
+    ;;
+esac

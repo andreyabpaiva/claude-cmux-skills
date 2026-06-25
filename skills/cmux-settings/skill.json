@@ -1,0 +1,6 @@
+{
+  "name": "cmux-settings",
+  "version": "1.0.0",
+  "category": "config",
+  "description": "Read and write cmux settings via cmux-settings helper"
+}

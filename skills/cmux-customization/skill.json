@@ -1,0 +1,6 @@
+{
+  "name": "cmux-customization",
+  "version": "1.0.0",
+  "category": "config",
+  "description": "Customize cmux.json — actions, layouts, dock controls, workspace commands"
+}

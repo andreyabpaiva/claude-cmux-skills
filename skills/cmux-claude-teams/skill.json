@@ -1,0 +1,6 @@
+{
+  "name": "cmux-claude-teams",
+  "version": "1.0.0",
+  "category": "automation",
+  "description": "Multi-agent Claude Teams in cmux — frontend-opinionated with worktrees and QA"
+}

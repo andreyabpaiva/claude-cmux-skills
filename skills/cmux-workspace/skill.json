@@ -1,0 +1,6 @@
+{
+  "name": "cmux-workspace",
+  "version": "1.0.0",
+  "category": "core",
+  "description": "Scope work to current workspace without disrupting other panes"
+}

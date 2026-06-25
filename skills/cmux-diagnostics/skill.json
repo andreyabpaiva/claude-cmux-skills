@@ -1,0 +1,6 @@
+{
+  "name": "cmux-diagnostics",
+  "version": "1.0.0",
+  "category": "utils",
+  "description": "Health checks for CLI, socket, hooks, and agent sessions"
+}

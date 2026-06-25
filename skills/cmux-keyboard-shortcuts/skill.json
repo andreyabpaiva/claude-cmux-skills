@@ -1,0 +1,6 @@
+{
+  "name": "cmux-keyboard-shortcuts",
+  "version": "1.0.0",
+  "category": "config",
+  "description": "Rebind cmux shortcuts — preset templates for tmux, vim, agent triage"
+}
