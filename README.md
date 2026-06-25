@@ -1,7 +1,3 @@
-# Claude Code Skills for CMUX
-
-Claude Code skills for working inside cmux. Teaches Claude how to use the cmux environment — topology, workspace automation, browser panels, multi-agent teams, and more.
-
 ## Setup
 
 Clone the repo and run setup to install the `cmux-claude` command globally:
